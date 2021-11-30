@@ -2,7 +2,13 @@ package com.reactnativemlkitocr
 
 import android.graphics.Point
 import android.graphics.Rect
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
+import android.os.ParcelFileDescriptor
+import android.content.ContentResolver
+
 import com.facebook.react.bridge.*
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
@@ -29,14 +35,23 @@ class MlkitOcrModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
   private fun detectFromResource(path: String, promise: Promise) {
     val image: InputImage;
+    val contentResolver: ContentResolver = reactApplicationContext.getContentResolver();
+
     try {
-      image = InputImage.fromFilePath(reactApplicationContext,  Uri.parse(path));
-      val recognizer = TextRecognition.getClient();
-      recognizer.process(image).addOnSuccessListener { visionText ->
-        promise.resolve(getDataAsArray(visionText))
-      }.addOnFailureListener { e ->
-        promise.reject(e);
-        e.printStackTrace();
+      val parcelFileDescriptor: ParcelFileDescriptor? = contentResolver.openFileDescriptor(Uri.parse(path), "r");
+      if (parcelFileDescriptor != null) {
+        val bitmap: Bitmap = BitmapFactory.decodeFileDescriptor(parcelFileDescriptor.fileDescriptor);
+        parcelFileDescriptor.close();
+
+        //image = InputImage.fromFilePath(reactApplicationContext,  Uri.parse(path));
+        image = InputImage.fromBitmap(bitmap, 90);
+        val recognizer = TextRecognition.getClient();
+        recognizer.process(image).addOnSuccessListener { visionText ->
+          promise.resolve(getDataAsArray(visionText))
+        }.addOnFailureListener { e ->
+          promise.reject(e);
+          e.printStackTrace();
+        }
       }
     } catch (e: Exception) {
       promise.reject(e);

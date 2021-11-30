@@ -95,6 +95,7 @@ RCT_REMAP_METHOD(detectFromUri, detectFromUri:(NSString *)imagePath resolver:(RC
         
         MLKTextRecognizer *textRecognizer = [MLKTextRecognizer textRecognizer];
         MLKVisionImage *handler = [[MLKVisionImage alloc] initWithImage:image];
+        handler.orientation = UIImageOrientationRight;
         
         [textRecognizer processImage:handler completion:^(MLKText  *_Nullable result, NSError *_Nullable error) {
             @try {
